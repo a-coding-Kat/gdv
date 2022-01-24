@@ -1,0 +1,206 @@
+---
+title: "GDV-Report"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+### Introduction
+
+This R notebook contains the graphics and an example of user test questions used in the Report on visualization fundamentals.
+
+### Libraries
+
+```{r}
+# library(ggplot2)
+# library(ggforce)
+# library(gridExtra)
+# library(dplyr)
+# library(ggfortify)
+# install.packages("zoo")
+```
+### Visualizations
+
+1. Iris dataset species
+
+```{r}
+p1 <- ggplot(iris, 
+             aes(x=Sepal.Length, 
+                 y=Sepal.Width)) + 
+      geom_point() + ggtitle("Step 1")
+
+p2 <- ggplot(iris, 
+             aes(x=Sepal.Length, 
+                 y=Sepal.Width,
+                 color=Species)) + 
+      geom_point() + ggtitle("Step 2")
+
+p3 <- ggplot(iris, 
+             aes(x=Sepal.Length, 
+                 y=Sepal.Width,
+                 color=Species)) + 
+      geom_point() + ggtitle("Step 3") + 
+      facet_wrap(. ~ Species)
+
+grid.arrange(p1, p2, p3, ncol=1)
+```
+
+2. Histogram with the Iris dataset
+
+```{r}
+p1 <- ggplot(iris, aes(x=Sepal.Width)) + 
+  geom_histogram(bins=5) + ggtitle("n_bins = 5")
+
+p2 <- ggplot(iris, aes(x=Sepal.Width)) + 
+  geom_histogram(bins=10, fill="#aaaaaa") + ggtitle("n_bins = 10")
+
+p3 <- ggplot(iris, aes(x=Sepal.Width)) + 
+  geom_histogram(bins=20) + ggtitle("n_bins = 20")
+
+p4 <- ggplot(iris, aes(x=Sepal.Width)) + 
+  geom_histogram(bins=40) + ggtitle("n_bins = 40")
+
+grid.arrange(p1, p2, p3, p4, ncol=2)
+```
+
+3. Density plot
+
+```{r}
+p1 <- ggplot(iris, aes(x=Sepal.Width)) + 
+  geom_density(adjust=0.5) + ggtitle("bandwidth / 2")
+
+p2 <- ggplot(iris, aes(x=Sepal.Width)) + 
+  geom_density(adjust=1) + ggtitle("bandwidth")
+
+p3 <- ggplot(iris, aes(x=Sepal.Width)) + 
+  geom_density(adjust=2) + ggtitle("2 * bandwidth")
+
+p4 <- ggplot(iris, aes(x=Sepal.Width)) + 
+  geom_density(adjust=4) + ggtitle("4 * bandwidth")
+
+grid.arrange(p1, p2, p3, p4, ncol=2)
+```
+
+4. Visual perception principles on the mtcars dataset
+
+```{r}
+ggplot(mtcars, aes(x=hp, y=mpg)) + geom_point() + 
+  stat_smooth(se=FALSE, linetype="dotted", span=1)
+```
+
+5. Categorzation: colors, group highlighting
+
+```{r}
+p1 <- ggplot(mtcars, aes(x=hp, y=mpg, color=cyl)) + geom_point() +
+  ggtitle("Continuous color scale")
+
+p2 <- ggplot(mtcars, aes(x=hp, y=mpg, color=factor(cyl))) + geom_point() +
+  ggtitle("Categorical color scale")
+
+p3 <- ggplot(mtcars, aes(x=hp, y=mpg, color=factor(cyl))) + geom_point() + 
+  geom_mark_ellipse(aes(fill=factor(cyl), filter = cyl == 4), con.linetype=2) +
+  geom_mark_ellipse(aes(fill=factor(cyl), filter = cyl == 6)) +
+  geom_mark_ellipse(aes(fill=factor(cyl), filter = cyl == 8)) +
+  ggtitle("Highlighted groups")
+
+grid.arrange(p1, p2, p3, ncol=1)
+```
+### Usability testing
+
+For the above example, we could test which graphics is the most informative, and whether or not we need to additionally highlight the groups.
+
+The usability question could be about the fuel efficiency:
+"If you want an optimal miles-per-gallon ratio, how many cylinders should your car have to be on a safe side with fuel consumption?"
+
+  a) 4
+  b) 4 or 6
+  c) 6
+  c) 6 or 8
+  
+To solve the question, one test group with 2-5 participants would receive the graphics "Categorical color scale", another group with the same number of participants would receive the graphics "Highlighted groups".
+Based on the % of users that discern the right information from the visualization, the better graph would be chosen.
+
+6. Dataset mtcars, encoding number of gears as bubble size
+
+```{r}
+ggplot(mtcars, aes(x=hp, y=mpg, color=factor(cyl), size=factor(gear))) + 
+  geom_point()
+```
+
+7. Sub-graphs
+
+```{r}
+ggplot(mtcars, aes(x=hp, y=mpg, color=factor(cyl))) + 
+  geom_point() +
+  facet_wrap(. ~ factor(gear)) +
+  ggtitle("Division into sub-graphs by number of gears")
+```
+8. Airline passengers dataset
+
+```{r}
+autoplot(AirPassengers)
+```
+
+```{r}
+airline_data <- data.frame(AirPassengers, 
+                           year = trunc(time(AirPassengers)),
+                           month = month.abb[cycle(AirPassengers)]) %>%
+  rename(passengers=AirPassengers)
+
+airline_data %>% 
+  group_by(year) %>% 
+  summarise(total = sum(passengers)) %>% 
+  ggplot(aes(x = factor(year), y = total)) + 
+  geom_col() + ggtitle("Number of passengers per year")
+```
+
+```{r}
+airline_data %>% 
+  mutate(month = factor(month, levels=c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))) %>%
+  group_by(month) %>% 
+  summarise(total = sum(passengers)) %>% 
+  ggplot(aes(x = month, y = total)) + 
+  geom_col() + ggtitle("Number of passengers per month")
+```
+
+9. Informative value: scatter plot vs. box plot
+
+```{r}
+p1 <- ggplot(mtcars, aes(x=factor(cyl), y=mpg)) + geom_point()
+p2 <- ggplot(mtcars, aes(x=factor(cyl), y=mpg)) + geom_boxplot()
+grid.arrange(p1, p2, ncol=2)
+```
+
+10. Smoothing
+
+```{r}
+p1 <- ggplot(mtcars, aes(x=hp, y=mpg)) + geom_point() 
+p2 <- ggplot(mtcars, aes(x=hp, y=mpg)) + geom_point() + stat_smooth()
+grid.arrange(p1, p2, ncol=2)
+```
+
+11. Faceting
+
+```{r}
+ggplot(mtcars, aes(x=hp, y=mpg)) + geom_point() + facet_wrap(. ~ cyl) + ggtitle("Faceting on the number of cylinders")
+
+```
+
+12. Aesthetics
+
+```{r}
+p1 <- ggplot(mtcars, aes(x=factor(cyl), y=mpg, color=mpg)) + geom_point()
+p2 <- ggplot(mtcars, aes(x=hp, y=mpg, shape=factor(cyl))) + geom_point()
+p3 <- ggplot(mtcars, aes(x=hp, y=mpg, color=factor(cyl))) + geom_point()
+
+grid.arrange(p1, p2, p3, ncol=3)
+```
+
+13. Coordinate system
+
+```{r}
+p1 <- ggplot(mtcars, aes(x = 1, fill = factor(cyl))) + geom_bar()
+p2 <- ggplot(mtcars, aes(x = 1, fill = factor(cyl))) + geom_bar() + coord_polar(theta="y")
+grid.arrange(p1, p2, ncol=2)
+```
